@@ -1,0 +1,17 @@
+{
+    "printWidth": 120,
+    "singleQuote": true,
+    "phpVersion": "8.1",
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": [
+                "*.blade.php"
+            ],
+            "options": {
+                "tabWidth": 4,
+                "parser": "blade"
+            }
+        }
+    ]
+}
