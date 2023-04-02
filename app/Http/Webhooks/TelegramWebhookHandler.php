@@ -11,28 +11,13 @@ use Illuminate\Support\Stringable;
 
 class TelegramWebhookHandler extends WebhookHandler
 {
-    // https://defstudio.github.io/telegraph/quickstart/sending-a-message
-
-    /*
-     * 1. Lawyer does not exist for the chat and sends anything (except /start command)
-     * - ask to use /start command first
-     * 2. Lawyer does not exist for the chat and sends /start command
-     * - create a new Lawyer with empty name
-     * - greet and ask to introduce themselves
-     * 3. Lawyer exists, the name is empty, and they send a message
-     * - message should be 2 or 3 words long (first, last or first, middle, last names),
-     * otherwise ask for the correct message
-     *
-     * User sends /start
-     * Bot greets the user and asks to introduce themselves
-     */
-
     protected function handleChatMessage(Stringable $text): void
     {
         $lawyer = Lawyer::findByChat($this->chat);
+
         if (!$lawyer) {
             $this->chat
-                ->html('You are not registered yet. Use `/start` command to start registration.')
+                ->html(__('You are not registered yet. Use `/start` command to start registration.'))
                 ->keyboard(Keyboard::make()->buttons([Button::make('/start')->action('start')]))
                 ->send();
 
@@ -42,7 +27,9 @@ class TelegramWebhookHandler extends WebhookHandler
         if (!$lawyer->isComplete()) {
             $names = Str::of($text)->split('/\s+/');
             if ($names->count() !== 2 && $names->count() !== 3) {
-                $this->chat->html('Wrong name format: it should be LastName FirstName MiddleName (optional)')->send();
+                $this->chat
+                    ->html(__('Wrong name format: it should be LastName FirstName MiddleName (optional)'))
+                    ->send();
 
                 return;
             }
@@ -52,14 +39,33 @@ class TelegramWebhookHandler extends WebhookHandler
             $name = Str::of($firstName)
                 ->when($lastName)
                 ->append(' ', $middleName);
-            $this->chat->html("Nice to meet you, $name 👋🏻")->send();
+            $this->chat->html(__("Nice to meet you, $name 👋🏻"))->send();
+            $this->chat
+                ->html(
+                    __(
+                        "You could use this bot after administrator approves your account. I'll let you know once it happens.",
+                    ),
+                )
+                ->send();
+
+            return;
+        }
+
+        if (!$lawyer->isActive()) {
+            $this->chat
+                ->html(
+                    __(
+                        "You could use this bot after administrator approves your account. I'll let you know once it happens.",
+                    ),
+                )
+                ->send();
 
             return;
         }
 
         // Unexpected message
         $this->chat
-            ->message('To register various documents use appropriate commands. Use `/help` for help.')
+            ->message(__('Use bot commands to perform different actions. Use `/help` for help.'))
             ->keyboard(Keyboard::make()->buttons([Button::make('/help')->action('help')]))
             ->send();
     }
@@ -69,25 +75,24 @@ class TelegramWebhookHandler extends WebhookHandler
         $lawyer = Lawyer::byChat($this->chat);
 
         if ($lawyer->isComplete()) {
-            $this->chat->html('We already know each other.');
+            $this->chat->html(__('We already know each other. Use relevant commands or `/help` for help.'));
 
             return;
         }
 
-        $this->chat->html('Please, introduce yourself: send your LastName FirstName MiddleName (optional).')->send();
+        $this->chat
+            ->html(__('Please, introduce yourself: send your LastName FirstName MiddleName (optional).'))
+            ->send();
     }
 
     public function help(): void
     {
-        $this->chat
-            ->html(
-                <<<MD
-                    * `/start` - registration
-                    * `/contract` - register a contract
-                    * `/help` - commands list
-                MD
-                ,
-            )
-            ->send();
+        $commands = collect([
+            __('`/start` - registration'),
+            __('`/contract` - register a contract'),
+            __('`/help` - commands list'),
+        ]);
+
+        $this->chat->html($commands->map(fn(string $command) => "* $command\n"))->send();
     }
 }
