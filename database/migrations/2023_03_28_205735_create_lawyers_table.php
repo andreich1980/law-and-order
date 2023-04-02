@@ -15,8 +15,8 @@ return new class extends Migration {
             $table->string('last_name', 20)->nullable();
             $table->string('first_name', 20)->nullable();
             $table->string('middle_name', 20)->nullable();
-            $table->dateTime('activated_at')->nullable();
-            $table->foreignIdFor(User::class, 'activated_by')->nullable();
+            $table->dateTime('approved_at')->nullable();
+            $table->foreignIdFor(User::class, 'approved_by')->nullable();
 
             $table->timestamps();
         });

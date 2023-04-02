@@ -28,9 +28,14 @@ class Lawyer extends Model
         return $this->first_name && $this->last_name;
     }
 
-    public function activatedBy(): BelongsTo
+    public function isActive(): bool
     {
-        return $this->belongsTo(self::class, 'activated_by');
+        return (bool) $this->approved_at;
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'approved_by');
     }
 
     public function chat(): BelongsTo
