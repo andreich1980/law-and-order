@@ -8,8 +8,8 @@ beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-it('displays dashboard with telegram bot section when bot does not exist', function () {
-    $response = $this->actingAs($this->user)->get('/dashboard');
+it('displays telegram bot page when bot does not exist', function () {
+    $response = $this->actingAs($this->user)->get('/bot');
 
     $response
         ->assertSuccessful()
@@ -17,10 +17,10 @@ it('displays dashboard with telegram bot section when bot does not exist', funct
         ->assertViewHas('bot', fn(TelegraphBot $bot) => !$bot->exists);
 });
 
-it('displays dashboard with telegram bot section when bot exists', function () {
+it('displays telegram bot page when bot exists', function () {
     $bot = TelegraphBot::factory()->create();
 
-    $response = $this->actingAs($this->user)->get('/dashboard');
+    $response = $this->actingAs($this->user)->get('/bot');
 
     $response
         ->assertSuccessful()
@@ -34,15 +34,16 @@ it('creates telegram bot and registers the webhook', function () {
     expect(TelegraphBot::first())->toBeNull();
 
     $response = $this->actingAs($this->user)
-        ->from('/dashboard')
+        ->from('/bot')
         ->put(route('bot.update'), [
             'name' => 'My bot',
             'token' => 'xxx:yyy',
         ]);
 
-    $response->assertValid()->assertRedirect('/dashboard');
-    expect($bot = TelegraphBot::first())->not->toBeNull();
-    expect($bot)
+    $response->assertValid()->assertRedirect('/bot');
+    expect($bot = TelegraphBot::first())
+        ->not->toBeNull()
+        ->and($bot)
         ->name->toBe('My bot')
         ->token->toBe('xxx:yyy');
     Telegraph::assertRegisteredWebhook();
@@ -56,13 +57,13 @@ it('updates telegram bot and registers the webhook', function () {
     ]);
 
     $response = $this->actingAs($this->user)
-        ->from('/dashboard')
+        ->from('/bot')
         ->put(route('bot.update'), [
             'name' => 'New bot name',
             'token' => 'new:token',
         ]);
 
-    $response->assertValid()->assertRedirect('/dashboard');
+    $response->assertValid()->assertRedirect('/bot');
     expect($bot->fresh())
         ->name->toBe('New bot name')
         ->token->toBe('new:token');
